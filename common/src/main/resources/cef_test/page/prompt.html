@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Prompt</title>
+    <style>
+        body {
+            margin: 0;
+            background: rgba(0,0,0,0.35);
+            font-family: system-ui, sans-serif;
+        }
+
+        .dialog {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            color: #fff;
+            padding: 20px;
+            width: 320px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.5);
+        }
+
+        .title {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #333;
+            color: #fff;
+        }
+
+        .buttons {
+            text-align: right;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 6px 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dialog">
+    <div class="title" id="title">Prompt</div>
+    <div class="content" id="content">请输入：</div>
+    <input type="text" id="promptInput" value="">
+    <div class="buttons">
+        <button onclick="cancel()">Cancel</button>
+        <button onclick="ok()">OK</button>
+    </div>
+</div>
+
+<script>
+    // 获取 URL 参数
+    function getHash() {
+        return new URLSearchParams(window.location.search).get("browser");
+    }
+    function getMessage() {
+        return new URLSearchParams(window.location.search).get("message") || "请输入：";
+    }
+    function getPromptDefault() {
+        return new URLSearchParams(window.location.search).get("prompt") || "";
+    }
+
+    // 初始化页面
+    document.getElementById("content").innerHTML = getMessage();
+    document.getElementById("promptInput").value = getPromptDefault();
+
+    function ok() {
+        const value = document.getElementById("promptInput").value;
+        cefQuery({
+            request: JSON.stringify({
+                hash: getHash(),
+                type: "alertResult",
+                ok: true,
+                value: value
+            })
+        });
+    }
+
+    function cancel() {
+        cefQuery({
+            request: JSON.stringify({
+                hash: getHash(),
+                type: "alertResult",
+                ok: false,
+                value: null
+            })
+        });
+    }
+
+</script>
+<script src="../trail-effect.js"></script>
+<script>
+    TrailEffect.init({
+        maxTrail: 20,        // 尾巴长度
+        color: '12,233,233',  // RGB 颜色
+        size: 1             // 尾巴最大半径
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Alert</title>
+    <script>
+        function showAlert() {
+            alert("Hello from JCEF!");
+        }
+
+        // 可选：页面加载完成自动弹出
+        window.onload = function() {
+            //showAlert();
+        }
+    </script>
+    <style>
+        #ball {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #f39c12;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+<h1>Test Alert</h1>
+<button onclick="showAlert()">Click me to show alert</button>
+<br>
+<button onclick="confirm('test')">Click me to show conform</button>
+<br>
+<button onclick="prompt('test','def')">Click me to show prompt</button>
+<h1>Test Select Tag</h1>
+<select>
+    <option value="volvo">Volvo</option>
+    <option value="saab">Saab</option>
+    <option value="opel">Opel</option>
+    <option value="audi">Audi</option>
+</select>
+<a href="https://baidu.com" target="_blank">BAIDU</a><br>
+<div id="ball"></div>
+<script>
+    const ball = document.getElementById('ball');
+    let x = 0;
+    let direction = 1; // 1 向右, -1 向左
+    const speed = 2; // 每帧移动像素
+
+    function animate() {
+        const width = window.innerWidth - ball.offsetWidth;
+        x += speed * direction;
+        if (x >= width || x <= 0) {
+            direction *= -1; // 碰到边界反向
+        }
+        ball.style.left = x + 'px';
+        requestAnimationFrame(animate); // 持续动画
+    }
+
+    animate();
+</script>
+</body>
+</html>

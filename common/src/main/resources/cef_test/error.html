@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1e1e1e;
+            color: #ff6b6b;
+            font-family: sans-serif;
+        }
+        h1 {
+            font-size: 24px;
+            border: 2px solid #ff6b6b;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+<body>
+
+<h1 id="error">Unknown Error</h1>
+
+<script>
+    function getErrorMessage() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("error");
+    }
+
+    const errorMsg = getErrorMessage();
+    if (errorMsg) {
+        // 防止 XSS，使用 textContent
+        document.getElementById("error").textContent = `${errorMsg}`;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Alert</title>
+    <style>
+        body {
+            margin: 0;
+            background: rgba(0,0,0,0.35);
+            font-family: system-ui, sans-serif;
+        }
+
+        .dialog {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            color: #fff;
+            padding: 20px;
+            width: 320px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.5);
+        }
+
+        .title {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .buttons {
+            text-align: right;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 6px 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dialog">
+    <div class="title" id="title">Confirm</div>
+    <div class="content" id="content">确认操作？</div>
+    <div class="buttons">
+        <button style=""  onclick="cancel()">Cancel</button>
+        <button onclick="ok()">Conform</button>
+    </div>
+</div>
+<script src="../trail-effect.js"></script>
+<script>
+    TrailEffect.init({
+        maxTrail: 20,        // 尾巴长度
+        color: '12,233,233',  // RGB 颜色
+        size: 1             // 尾巴最大半径
+    });
+</script>
+<script>
+    function getHash() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("browser");
+    }
+    function getTitle() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("message");
+    }
+    document.getElementById("content").innerHTML=getTitle();
+    function ok() {
+        cefQuery({
+            request: JSON.stringify({
+                hash: getHash(),
+                type: "alertResult",
+                ok: true
+            })
+        });
+    }
+
+    function cancel() {
+        cefQuery({
+            request: JSON.stringify({
+                hash: getHash(),
+                type: "alertResult",
+                ok: false
+            })
+        });
+    }
+</script>
+
+</body>
+</html>

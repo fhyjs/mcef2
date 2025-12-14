@@ -22,8 +22,14 @@ subprojects {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
         archivesName = "$rootProject.archives_name-$project.name"
     }
-
+    configurations.configureEach {
+        exclude group: "me.friwi", module: "jcef-api"
+    }
     repositories {
+        maven {
+            name = 'ParchmentMC'
+            url = 'https://maven.parchmentmc.org'
+        }
         // Add repositories to retrieve artifacts from in here.
         // You should only use this when depending on other mods because
         // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -35,10 +41,11 @@ subprojects {
     }
 
     dependencies {
+
         minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
         mappings loom.layered {
-            it.mappings("net.fabricmc:yarn:$rootProject.yarn_mappings:v2")
-            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$rootProject.yarn_mappings_patch_neoforge_version")
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:2024.11.17")
         }
     }
 
