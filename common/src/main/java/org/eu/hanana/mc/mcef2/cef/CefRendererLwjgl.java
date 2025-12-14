@@ -98,13 +98,7 @@ public class CefRendererLwjgl implements ICefRenderer {
     public void setGuiGraphics(GuiGraphics guiGraphics) {
         this.guiGraphics = guiGraphics;
     }
-
-    @Override
-    public void onJsAlert(CefBrowserMC browser, String originUrl, CefJSDialogHandler.JSDialogType dialogType, String messageText, String defaultPromptText, CefJSDialogCallback callback, BoolRef suppressMessage) {
-
-    }
-
-    @Override
+        @Override
     public void render(double x1, double y1, double x2, double y2) {
         if(view_width_ == 0 || view_height_ == 0)
             return;
