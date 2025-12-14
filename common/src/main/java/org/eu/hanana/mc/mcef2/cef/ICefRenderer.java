@@ -15,7 +15,7 @@ import org.eu.hanana.mc.mcef2.cef.jsobj.AlertResult;
 import java.awt.*;
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.glfw.GLFW.glfwSetWindowSize;
+import static org.lwjgl.glfw.GLFW.*;
 
 public interface ICefRenderer {
     default void onJsAlert(CefBrowserMC browser, String originUrl, CefJSDialogHandler.JSDialogType dialogType, String messageText, String defaultPromptText, CefJSDialogCallback callback, BoolRef suppressMessage){
@@ -64,6 +64,7 @@ public interface ICefRenderer {
         };
         render.addTask(()->{
             glfwSetWindowSize(render.window, 450, 300);
+            glfwSetWindowAttrib(render.window, GLFW_FLOATING, GLFW_TRUE);
         });
         render.cefBrowserMC=browserMC;
         browserMC.createImmediately();

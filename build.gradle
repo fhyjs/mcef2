@@ -22,6 +22,24 @@ subprojects {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
         archivesName = "$rootProject.archives_name-$project.name"
     }
+    tasks.register('signJar', Exec) {
+        dependsOn jar
+        // 签名输出文件名
+        def inputJar = tasks.named('jar').get().archiveFile.get().asFile
+        def signedJar = new File("${buildDir}/libs/${base.archivesName.get()}-${version}-signed.jar")
+
+        commandLine 'jarsigner',
+                '-keystore', '../hanana.jks',
+                '-storepass', '12345678q',  // 也可以通过环境变量注入，避免泄露
+                '-keypass', '12345678q',
+                '-signedjar', signedJar.absolutePath,
+                inputJar.absolutePath,
+                'hananaapps' // alias
+    }
+
+    tasks.build {
+        dependsOn tasks.signJar
+    }
     configurations.configureEach {
         exclude group: "me.friwi", module: "jcef-api"
     }

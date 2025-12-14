@@ -62,7 +62,7 @@ public final class MCEFMod {
 
         ClientGuiEvent.RENDER_POST.register((screen, guiGraphics, i, i1, deltaTracker) -> {
             if (screen instanceof TitleScreen){
-                Minecraft.getInstance().setScreen(new TestBrowserScreen());
+                //Minecraft.getInstance().setScreen(new TestBrowserScreen());
             }
         });
         ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> {
