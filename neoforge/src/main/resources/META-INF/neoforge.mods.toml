@@ -11,7 +11,7 @@ authors = "HANANA"
 description = '''
 JCEF in minecraft
 '''
-#logoFile = ""
+logoFile = "assets/mcef2/logo.png"
 
 [[dependencies.mcef2]]
 modId = "neoforge"

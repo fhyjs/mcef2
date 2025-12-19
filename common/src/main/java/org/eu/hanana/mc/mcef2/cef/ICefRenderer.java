@@ -13,7 +13,9 @@ import org.eu.hanana.mc.mcef2.cef.event.ICefMessageRouterEvent;
 import org.eu.hanana.mc.mcef2.cef.jsobj.AlertResult;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -80,4 +82,6 @@ public interface ICefRenderer {
     void onPopupClosed();
 
     default void onTitleChange(CefBrowserMC cefBrowserMC, String title){}
+
+    CompletableFuture<BufferedImage> createScreenshot(boolean nativeResolution);
 }

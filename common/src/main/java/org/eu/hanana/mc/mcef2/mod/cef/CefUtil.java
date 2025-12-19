@@ -3,6 +3,8 @@ package org.eu.hanana.mc.mcef2.mod.cef;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import dev.architectury.event.Event;
+import dev.architectury.event.EventFactory;
 import dev.architectury.event.EventResult;
 import me.friwi.jcefmaven.CefAppBuilder;
 import me.friwi.jcefmaven.CefBuildInfo;
@@ -21,6 +23,7 @@ import org.cef.network.CefRequest;
 import org.eu.hanana.mc.mcef2.cef.*;
 import org.eu.hanana.mc.mcef2.cef.dev.DevSearchItem;
 import org.eu.hanana.mc.mcef2.cef.event.ICefAppHandlerEvent;
+import org.eu.hanana.mc.mcef2.cef.event.ICefLoadEvent;
 import org.eu.hanana.mc.mcef2.mixin.MixinScreen;
 import org.eu.hanana.mc.mcef2.mod.screen.widget.WebViewWidget;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,6 +39,7 @@ import java.util.ListIterator;
 
 public class CefUtil {
     private static CefAppHandlerImpl cefAppHandler = null;
+    private static Event<ICefLoadEvent> cefLoadEvent = null;
     public static int getRandomPort() {
         try (ServerSocket socket = new ServerSocket(0)) { // 0 表示随机可用端口
             return socket.getLocalPort();
@@ -56,12 +60,27 @@ public class CefUtil {
     public static CefAppHandlerImpl getCefAppHandler() {
         return cefAppHandler;
     }
+
+    public static Event<ICefLoadEvent> getCefLoadEvent() {
+        return cefLoadEvent;
+    }
+
     @ApiStatus.Internal
     public static CefClient createClient(CefApp cefApp){
         var client = cefApp.createClient();
+        cefLoadEvent= EventFactory.createLoop();
         client.addLoadHandler(new CefLoadHandlerAdapter() {
+            private final String cefBrowserIdJs = """
+                        (function() {
+                            if (!window.__JCEF_BROWSER_ID__) {
+                                window.__JCEF_BROWSER_ID__ = "%s";
+                            }
+                            console.log("__JCEF_BROWSER_ID__:"+window.__JCEF_BROWSER_ID__);
+                        })();
+                        """;
             @Override
             public void onLoadStart(CefBrowser browser, CefFrame frame_, CefRequest.TransitionType transitionType) {
+                cefLoadEvent.invoker().onLoadStart(browser, frame_, transitionType);
                 CefDevToolsClient devToolsClient = browser.getDevToolsClient();
                 devToolsClient.executeDevToolsMethod("Page.enable");
                 devToolsClient.addEventListener(new CefDevToolsClient.EventListener() {
@@ -77,18 +96,10 @@ public class CefUtil {
                     if (frame.has("parentId")) return;
 
                     // JS 注入语句
-                    String js = """
-                        (function() {
-                            if (!window.__JCEF_BROWSER_ID__) {
-                                window.__JCEF_BROWSER_ID__ = "%s";
-                            }
-                            console.log("__JCEF_BROWSER_ID__:"+window.__JCEF_BROWSER_ID__);
-                        })();
-                        """.formatted(browser.hashCode());
 
                     // 构建参数对象
                     JsonObject args = new JsonObject();
-                    args.addProperty("expression", js);
+                    args.addProperty("expression", cefBrowserIdJs.formatted(browser.hashCode()));
                     args.addProperty("includeCommandLineAPI", false);
 
                     // 注入 JS
@@ -97,9 +108,56 @@ public class CefUtil {
                         devToolsClient.removeEventListener(this);
                     }).start();
                 }});
-
-
                 super.onLoadStart(browser, frame_, transitionType);
+            }
+
+            @Override
+            public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+                cefLoadEvent.invoker().onLoadEnd(browser, frame, httpStatusCode);
+                super.onLoadEnd(browser, frame, httpStatusCode);
+                browser.executeJavaScript(cefBrowserIdJs.formatted(browser.hashCode()),browser.getURL(),0);
+                browser.executeJavaScript(
+                        """
+                                (function () {
+                                    // 覆盖 window.open
+                                    window.open = function (url) {
+                                        if (url) location.href = url;
+                                        return window;
+                                    };
+                                
+                                    // 覆盖 a[target=_blank]
+                                    function fixLinks() {
+                                        document.querySelectorAll('a[target="_blank"]').forEach(a => {
+                                            a.addEventListener('click', function (e) {
+                                                e.preventDefault();
+                                                location.href = a.href;
+                                            }, true);
+                                        });
+                                    }
+                                
+                                    fixLinks();
+                                
+                                    // 处理 SPA / 动态页面
+                                    const obs = new MutationObserver(fixLinks);
+                                    obs.observe(document.documentElement, {
+                                        childList: true,
+                                        subtree: true
+                                    });
+                                })();
+                                """,
+                        browser.getURL(), 0);
+            }
+
+            @Override
+            public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+                super.onLoadError(browser, frame, errorCode, errorText, failedUrl);
+                cefLoadEvent.invoker().onLoadError(browser, frame, errorCode, errorText, failedUrl);
+            }
+
+            @Override
+            public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+                super.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
+                cefLoadEvent.invoker().onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
             }
         });
         client.addJSDialogHandler(new CefJSDialogHandlerAdapter() {

@@ -358,7 +358,7 @@ public class CefBrowserMC  extends CefBrowser_N implements CefRenderHandler , Cl
 
     @Override
     public CompletableFuture<BufferedImage> createScreenshot(boolean nativeResolution) {
-        return null;
+        return renderer_.createScreenshot(nativeResolution);
     }
 
     @Override

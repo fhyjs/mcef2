@@ -29,8 +29,10 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.lwjgl.opengl.ARBInternalformatQuery2.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.EXTBGRA.GL_BGRA_EXT;
@@ -56,7 +58,48 @@ public class CefRendererLwjgl implements ICefRenderer {
         initialize();
 
     }
+    @Override
+    public CompletableFuture<BufferedImage> createScreenshot(boolean nativeResolution) {
+        CompletableFuture<BufferedImage> future = new CompletableFuture<>();
 
+        // 提交任务到 GL 线程，确保读取纹理安全
+        Minecraft.getInstance().doRunTask(() -> {
+            try {
+                if (texture_id_ == 0 || view_width_ == 0 || view_height_ == 0) {
+                    future.completeExceptionally(new IllegalStateException("No texture available"));
+                    return;
+                }
+
+                // 绑定纹理
+                glBindTexture(GL_TEXTURE_2D, texture_id_);
+
+                // 读取像素数据
+                ByteBuffer buffer = ByteBuffer.allocateDirect(view_width_ * view_height_ * 4).order(ByteOrder.nativeOrder());
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, buffer);
+
+                BufferedImage image = new BufferedImage(view_width_, view_height_, BufferedImage.TYPE_INT_ARGB);
+
+                for (int y = 0; y < view_height_; y++) {
+                    for (int x = 0; x < view_width_; x++) {
+                        int i = ((view_height_ - 1 - y) * view_width_ + x) * 4;
+                        int b = buffer.get(i) & 0xFF;
+                        int g = buffer.get(i + 1) & 0xFF;
+                        int r = buffer.get(i + 2) & 0xFF;
+                        int a = buffer.get(i + 3) & 0xFF;
+                        int pixel = (a << 24) | (r << 16) | (g << 8) | b;
+                        image.setRGB(x, y, pixel);
+                    }
+                }
+
+                glBindTexture(GL_TEXTURE_2D, 0);
+                future.complete(image);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        });
+
+        return future;
+    }
     protected void initialize() {
         //GlStateManager.enableTexture2D();
         texture_id_ = GlStateManager._genTexture();

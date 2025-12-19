@@ -1,6 +1,7 @@
 plugins {
     id 'dev.architectury.loom' version '1.11-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'maven-publish'
     id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
@@ -13,6 +14,20 @@ allprojects {
     version = rootProject.mod_version
 }
 
+
+publishing {
+    publications {
+        jcef(MavenPublication) {
+            groupId = 'org.eu.hanana'
+            artifactId = 'jcef-api'
+            version = '141.0.10'
+            artifact(file("libs/jcef-api.jar"))
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
 subprojects {
     apply plugin: 'dev.architectury.loom'
     apply plugin: 'architectury-plugin'
@@ -22,28 +37,44 @@ subprojects {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
         archivesName = "$rootProject.archives_name-$project.name"
     }
-    tasks.register('signJar', Exec) {
-        dependsOn jar
-        // 签名输出文件名
-        def inputJar = tasks.named('jar').get().archiveFile.get().asFile
-        def signedJar = new File("${buildDir}/libs/${base.archivesName.get()}-${version}-signed.jar")
+    tasks.register('signFinalJar') {
+        dependsOn tasks.remapJar
 
-        commandLine 'jarsigner',
-                '-keystore', '../hanana.jks',
-                '-storepass', '12345678q',  // 也可以通过环境变量注入，避免泄露
-                '-keypass', '12345678q',
-                '-signedjar', signedJar.absolutePath,
-                inputJar.absolutePath,
-                'hananaapps' // alias
+        doLast {
+            def inputJar = tasks.remapJar.archiveFile.get().asFile
+            def signedJar = new File(
+                    inputJar.parent,
+                    inputJar.name.replace(".jar", "-signed.jar")
+            )
+
+            exec {
+                commandLine(
+                        "jarsigner",
+                        "-keystore", "${rootProject.projectDir}/hanana.jks",
+                        '-keypass', '12345678q',
+                        "-storepass", "12345678q",
+                        "-signedjar", signedJar.absolutePath,
+                        inputJar.absolutePath,
+                        "hananaapps"
+                )
+            }
+        }
     }
-
+    tasks.processResources{
+        //dependsOn("publishJcefToMavenLocal")
+    }
     tasks.build {
-        dependsOn tasks.signJar
+        //dependsOn tasks.signJar
+        //dependsOn("publishJcefToMavenLocal")
+        finalizedBy tasks.signFinalJar
     }
     configurations.configureEach {
         exclude group: "me.friwi", module: "jcef-api"
     }
     repositories {
+        maven {
+            url 'https://maven.aliyun.com/repository/public/'
+        }
         maven {
             name = 'ParchmentMC'
             url = 'https://maven.parchmentmc.org'
@@ -54,8 +85,8 @@ subprojects {
         // See https://docs.gradle.org/current/userguide/declaring_repositories.html
         // for more information about repositories.
         maven {
-		  url 'https://maven.aliyun.com/repository/public/'
-		}
+            url 'https://maven.hanana2.link:2053/releases'
+        }
     }
 
     dependencies {

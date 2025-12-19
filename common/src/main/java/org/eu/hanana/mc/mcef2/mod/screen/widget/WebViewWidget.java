@@ -42,10 +42,13 @@ public class WebViewWidget extends AbstractWidget implements Closeable {
     @SuppressWarnings("unchecked")
     @MustBeClosed
     public WebViewWidget(Screen screen, int x, int y, int width, int height, Component message) {
+        this(screen,x,y,width,height,message,"classpath://cef_test/welcome.html");
+    }
+    public WebViewWidget(Screen screen, int x, int y, int width, int height, Component message,String url) {
         super(x, y, width, height, message);
         this.screen=screen;
         MCEFMod.LOGGER.info("Created a webview in screen:{} ,class:{}", screen.getTitle().getString(),screen.getClass());
-        cefBrowserMC=new CefBrowserMC(MCEFMod.cefClient,"classpath://cef_test/welcome.html",true, CefRequestContext.getGlobalContext(),cefRendererLwjgl=new CefRendererLwjgl(true));
+        cefBrowserMC=new CefBrowserMC(MCEFMod.cefClient,url,true, CefRequestContext.getGlobalContext(),cefRendererLwjgl=new CefRendererLwjgl(true));
         try {
             ((ArrayList<WebViewWidget>) screen.getClass().getMethod("mcef2$GetWebViewWidgets").invoke(screen)).add(this);
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
@@ -86,9 +89,9 @@ public class WebViewWidget extends AbstractWidget implements Closeable {
     private double getScaleY() { return getScaleH(getHeight()) / getHeight(); }
     @Override
     protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        guiGraphics.fill(getX(),getY(),width+getX(),height+getY(),0xff3fffff);
-        if (cefBrowserMC.isLoading()){
 
+        if (cefBrowserMC.isLoading()){
+            guiGraphics.fill(getX(),getY(),width+getX(),height+getY(),0xff3fffff);
             guiGraphics.drawString(Minecraft.getInstance().fontFilterFishy,"WebView is loading... ",width/2-10,height/3,0,false);
         }
         //GL11.glEnable(GL_TEXTURE_2D);

@@ -5,7 +5,10 @@ import dev.architectury.event.Event;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.client.ClientScreenInputEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import me.friwi.jcefmaven.CefBuildInfo;
 import me.friwi.jcefmaven.CefInitializationException;
 import me.friwi.jcefmaven.UnsupportedPlatformException;
@@ -25,11 +28,14 @@ import org.eu.hanana.mc.mcef2.cef.CefBrowserMC;
 import org.eu.hanana.mc.mcef2.cef.CelInstaller;
 import org.eu.hanana.mc.mcef2.mod.InstallerMsgOutput;
 import org.eu.hanana.mc.mcef2.mod.cef.CefUtil;
+import org.eu.hanana.mc.mcef2.mod.client.Mcef2KeyBindingsRegister;
 import org.eu.hanana.mc.mcef2.mod.screen.TestBrowserScreen;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Random;
+
+import static dev.architectury.utils.Env.CLIENT;
 
 public final class MCEFMod {
     public static CefApp cefApp;
@@ -65,8 +71,18 @@ public final class MCEFMod {
                 //Minecraft.getInstance().setScreen(new TestBrowserScreen());
             }
         });
-        ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> {
-            cefApp.dispose();
-        });
+        LOGGER.info("Env: {}",Platform.getEnvironment());
+        if (Platform.getEnvironment()==CLIENT){
+
+            Mcef2KeyBindingsRegister.reg();
+            ClientLifecycleEvent.CLIENT_STOPPING.register(instance -> {
+                cefApp.dispose();
+            });
+        }else {
+            LifecycleEvent.SERVER_STOPPING.register(instance -> {
+                cefApp.dispose();
+            });
+        }
+
     }
 }
